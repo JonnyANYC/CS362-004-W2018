@@ -643,7 +643,7 @@ int getCost(int cardNumber)
   return -1;
 }
 
-int cardEffectAdventurer(struct gameState *state, int handPos, int currentPlayer,
+int cardEffectAdventurer(struct gameState *state, int currentPlayer,
                          int *temphand, // temphand length = MAX_HAND
                          int drawntreasure)
 {
@@ -793,8 +793,8 @@ int cardEffect(int card, int choice1, int choice2, int choice3, struct gameState
     {
     case adventurer:
 
-      return cardEffectAdventurer(state, handPos, currentPlayer,
-                                  temphand, drawntreasure);
+      return cardEffectAdventurer(state, currentPlayer, temphand,
+                                  drawntreasure);
 
     case council_room:
       return cardEffectCouncilRoom(state, handPos, currentPlayer);
