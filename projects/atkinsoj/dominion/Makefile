@@ -18,13 +18,16 @@ badTestDrawCard: badTestDrawCard.c dominion.o rngs.o
 testBuyCard: testDrawCard.c dominion.o rngs.o
 	gcc -o testDrawCard -g  testDrawCard.c dominion.o rngs.o $(CFLAGS)
 
+testJonSuite: unittest?.c dominion.o rngs.o
+	gcc  -o testJonSuite -g  unittest?.c dominion.o rngs.o $(CFLAGS)
+
 testAll: dominion.o testSuite.c
 	gcc -o testSuite testSuite.c -g  dominion.o rngs.o $(CFLAGS)
 
 interface.o: interface.h interface.c
 	gcc -c interface.c -g  $(CFLAGS)
 
-runtests: testDrawCard 
+runtests: testDrawCard
 	./testDrawCard &> unittestresult.out
 	gcov dominion.c >> unittestresult.out
 	cat dominion.c.gcov >> unittestresult.out

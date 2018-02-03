@@ -1,18 +1,28 @@
 /*********************************************************************
-** Program Filename: 
+** Program Filename:
 ** Author: Jon Atkinson
 ** Date: 1/27/2018
-** Description: 
-** Input: 
-** Output: 
+** Description:
+** Input:
+** Output:
 *********************************************************************/
+
+int addCards(int* cardPile, int card, int cardCount)
+{
+    for (int i = 0; i < cardCount; i++)
+    {
+        state->cardPile[i] = card;
+    }
+
+    return cardCount;
+}
 
 
 /*********************************************************************
 ** Function:
 ** Description:
 ** Parameters:
-** Returns: 
+** Returns:
 ** Pre-Conditions:
 ** Post-Conditions:
 *********************************************************************/
@@ -56,12 +66,20 @@ void testShuffle()
     state->whoseTurn = 0;
     state->handCount[state->whoseTurn] = 0;
 
-    // FIXME: Replace bogus log statement with something useful.
-    printf("Deck count now: %d\n", state->deckCount[player]);
+    // FIXME: Improve log statements.
+    printf("Deck and discard counts before shuffle: %d, %d\n",
+            state->deckCount[player],
+            state->discardCount[player]);
 
-    shuffle(player, state);
+    int ret = shuffle(player, state);
+
+    // FIXME: Improve log statements.
+    printf("Deck and discard counts after shuffle: %d, %d\n",
+            state->deckCount[player],
+            state->discardCount[player]);
 
     // Test oracle 1: confirm all of the discards are moved to the deck.
+    assert(ret == 0);
     assert(state->discardCount[player] == 0);
     assert(state->deckCount[player] == 3 + 10);
 
@@ -86,6 +104,7 @@ void testShuffle()
             }
         } else
         {
+            // Found a card that wasn't in the original discard pile. Fail test.
             assert(state->deck[player][j] == copper);
         }
     }
