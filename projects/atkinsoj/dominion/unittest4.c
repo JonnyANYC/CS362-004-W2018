@@ -1,28 +1,11 @@
 #include <assert.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include "dominion.h"
 #include "dominion_helpers.h"
+#include "testSuite.h"
 
-/*********************************************************************
-** Program Filename:
-** Author: Jon Atkinson
-** Date: 1/27/2018
-** Description:
-** Input:
-** Output:
-*********************************************************************/
-
-/*********************************************************************
-** Function:
-** Description:
-** Parameters:
-** Returns:
-** Pre-Conditions:
-** Post-Conditions:
-*********************************************************************/
 int testScoreFor() {
-    // Build a canned game state. Mostly adapted from initializeGame().
+    // Build a canned game state.
     struct gameState *state = malloc(sizeof(struct gameState));
     state->numPlayers = 2;
 
@@ -48,7 +31,8 @@ int testScoreFor() {
 
     // Test oracle
     int r = 0;
-    r += assertEqual(9, ret, "Score is 9.");
+    // This is failing because of a bug in scoreFor() -- only discardCount of deck is checked.
+    r += assertEqual(6 + 1 + 3 - 1, ret, "Score is 9.");
     return r;
 }
 
@@ -82,6 +66,7 @@ int testScoreForWithGardens() {
 
     // Test oracle
     int r = 0;
-    r += assertEqual(6 + 1 + 3 + 2 -1 + 1, ret, "Score is 12.");
+    // This is failing because of a bug in scoreFor() -- only discardCount of deck is checked.
+    r += assertEqual(6 + 1 + 3 + 2 - 1 + 1, ret, "Score is 12.");
     return r;
 }

@@ -1,27 +1,9 @@
 #include <assert.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include "dominion.h"
 #include "dominion_helpers.h"
+#include "testSuite.h"
 
-/*********************************************************************
-** Program Filename:
-** Author: Jon Atkinson
-** Date: 1/27/2018
-** Description:
-** Input:
-** Output:
-*********************************************************************/
-
-
-/*********************************************************************
-** Function:
-** Description:
-** Parameters:
-** Returns:
-** Pre-Conditions:
-** Post-Conditions:
-*********************************************************************/
 int testFullDeckCount()
 {
     // Build a canned game state and full deck for a player.

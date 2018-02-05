@@ -2,24 +2,6 @@
 #include "dominion.h"
 #include "dominion_helpers.h"
 
-/*********************************************************************
-** Program Filename: 
-** Author: Jon Atkinson
-** Date: 2/3/2018
-** Description: 
-** Input: 
-** Output: 
-*********************************************************************/
-
-
-/*********************************************************************
-** Function:
-** Description:
-** Parameters:
-** Returns: 
-** Pre-Conditions:
-** Post-Conditions:
-*********************************************************************/
 
 void setUpGame(struct gameState* state) {
     // TODO: Do I need to initialize the supply cards?
@@ -56,11 +38,12 @@ void printTestResults(int successes, int fails) {
 
 void printTestSuiteResults(int failed) {
     if (failed == -1) {
-        printf("FAILURE\n");
+        printf("TEST SUITE FAILED\n");
     } else {
         printf("ALL TESTS PASSED\n");
     }
 }
+
 int addCards(int* cardPile, int card, int cardCount)
 {
     for (int i = 0; i < cardCount; i++)
@@ -98,18 +81,25 @@ int main() {
     int ret, successes, fails, failed = 0;
 
     // unittest1
+    printf("testing shuffle():\n");
     successes = 0, fails = 0;
     ret = testShuffle();
     countTestResults(ret, &successes, &fails, &failed);
+
+    ret = testShuffleEmptyDeck();
+    countTestResults(ret, &successes, &fails, &failed);
+
     printTestResults(successes, fails);
 
     // unittest2
+    printf("testing fullDeckCount():\n");
     successes = 0, fails = 0;
     ret = testFullDeckCount();
     countTestResults(ret, &successes, &fails, &failed);
     printTestResults(successes, fails);
 
     // unittest3
+    printf("testing isGameOver():\n");
     successes = 0, fails = 0;
     ret = testIsGameOverNotYet();
     countTestResults(ret, &successes, &fails, &failed);
@@ -123,6 +113,7 @@ int main() {
     printTestResults(successes, fails);
 
     // unittest4
+    printf("testing scoreFor():\n");
     successes = 0, fails = 0;
     ret = testScoreFor();
     countTestResults(ret, &successes, &fails, &failed);
@@ -133,24 +124,28 @@ int main() {
     printTestResults(successes, fails);
 
     // cardtest1
+    printf("testing smithy:\n");
     successes = 0, fails = 0;
     ret = testSmithy();
     countTestResults(ret, &successes, &fails, &failed);
     printTestResults(successes, fails);
 
     // cardtest2
+    printf("testing adventurer:\n");
     successes = 0, fails = 0;
     ret = testAdventurer();
     countTestResults(ret, &successes, &fails, &failed);
     printTestResults(successes, fails);
 
     // cardtest3
+    printf("testing village:\n");
     successes = 0, fails = 0;
     ret = testVillage();
     countTestResults(ret, &successes, &fails, &failed);
     printTestResults(successes, fails);
 
-    // cardtest3
+    // cardtest4
+    printf("testing great hall:\n");
     successes = 0, fails = 0;
     ret = testGreatHall();
     countTestResults(ret, &successes, &fails, &failed);

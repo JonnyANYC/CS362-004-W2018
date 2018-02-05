@@ -3,25 +3,8 @@
 #include <stdio.h>
 #include "dominion.h"
 #include "dominion_helpers.h"
+#include "testSuite.h"
 
-/*********************************************************************
-** Program Filename: 
-** Author: Jon Atkinson
-** Date: 2/3/2018
-** Description: 
-** Input: 
-** Output: 
-*********************************************************************/
-
-
-/*********************************************************************
-** Function:
-** Description:
-** Parameters:
-** Returns: 
-** Pre-Conditions:
-** Post-Conditions:
-*********************************************************************/
 
 int testSmithy() {
 
@@ -59,12 +42,13 @@ int testSmithy() {
     int* bonus = &player;  // Bogus pointer that isn't needed
     int ret = cardEffect(smithy, choice1, choice2, choice3, state, handPos, bonus);
 
+
     // Test oracle
     int r = 0;
     r += assertTrue(ret == 0, "Successful execution.");
 
-    // FIXME: Why does this fail? The action count should be 0.
-    r += assertEqual(0, state->numActions, "No more actions available to be played.");
+    // Actions are not decremented in cardEffect().
+    r += assertEqual(1, state->numActions, "Available actions is still the default of 1.");
 
     r += assertEqual(2, state->discardCount[player], "Still 2 discarded cards.");
     int playedCardCount = state->playedCardCount;

@@ -31,13 +31,7 @@ runtests: testDrawCard
 
 testSuite: unittest?.c cardtest?.c testSuite.c dominion.o rngs.o
 	gcc  -o testSuite -g  testSuite.c unittest?.c cardtest?.c dominion.o rngs.o $(CFLAGS)
-
-testJonSuite: unittest1.o unittest2.o unittest3.o unittest4.o cardtest1.o
-	unittest1 > unittestresults.out
-	unittest2 >> unittestresults.out
-	unittest3 >> unittestresults.out
-	unittest4 >> unittestresults.out
-	cardtest1 >> unittestresults.out
+	./testSuite > unittestresults.out
 	gcov dominion.c >> unittestresults.out
 	cat dominion.c.gcov >> unittestresults.out
 

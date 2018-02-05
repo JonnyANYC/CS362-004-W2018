@@ -3,25 +3,7 @@
 #include <stdio.h>
 #include "dominion.h"
 #include "dominion_helpers.h"
-
-/*********************************************************************
-** Program Filename: 
-** Author: Jon Atkinson
-** Date: 2/3/2018
-** Description: 
-** Input: 
-** Output: 
-*********************************************************************/
-
-
-/*********************************************************************
-** Function:
-** Description:
-** Parameters:
-** Returns: 
-** Pre-Conditions:
-** Post-Conditions:
-*********************************************************************/
+#include "testSuite.h"
 
 int testAdventurer() {
 
@@ -31,11 +13,11 @@ int testAdventurer() {
 
     int player = 1;
 
-    addCards(state->deck[player], copper, 13);
+    addCards(state->deck[player], estate, 13);
     state->deckCount[player] = 13;
-    state->deck[player][0] = copper;
-    state->deck[player][4] = silver;
-    state->deck[player][5] = gold;
+    state->deck[player][12] = copper;
+    state->deck[player][10] = silver;
+    state->deck[player][8] = gold;
 
     addCards(state->hand[player], copper, 5);
     state->handCount[player] = 5;
@@ -59,15 +41,16 @@ int testAdventurer() {
     int* bonus = &player;  // Bogus pointer that isn't needed
     int ret = cardEffect(adventurer, choice1, choice2, choice3, state, handPos, bonus);
 
+
     // Test oracle
     int r = 0;
     r += assertTrue(ret == 0, "Successful execution.");
 
-    // FIXME: Why does this fail? The action count should be 0.
-    r += assertEqual(0, state->numActions, "No more actions available to be played.");
+    // Actions are not decremented in cardEffect().
+    r += assertEqual(1, state->numActions, "Available actions is still the default of 1.");
 
-    // Next should fail because of intentional bug: a silver is discarded instead of retained.
-    r += assertEqual(2 + 3, state->discardCount[player], "5 discarded cards.");
+    // Next should fail because of intentional bug: a silver and following estate is discarded.
+    r += assertEqual(2 + 1, state->discardCount[player], "5 discarded cards.");
     int playedCardCount = state->playedCardCount;
     // Next two should pass, but cardEffectAdventurer() fails to discard the adventurer card. Bug!
     r += assertEqual(1, playedCardCount, "One played card.");
@@ -76,8 +59,8 @@ int testAdventurer() {
     int handCount = state->handCount[player];
     r += assertEqual(5 + 2, handCount, "7 cards in hand.");
     r += assertEqual(copper, state->hand[player][handCount - 2], "Second to last card in deck is a copper.");
-    // Next two should fail because of intentional bug: a silver is discarded instead of retained.
-    r += assertEqual(silver, state->hand[player][handCount - 2], "Last card in deck is a silver.");
+    // Next two should fail because of intentional bug: a silver and following estate are discarded.
+    r += assertEqual(silver, state->hand[player][handCount - 1], "Last card in deck is a silver.");
     r += assertEqual(13 - 3, state->deckCount[player], "10 cards in deck.");
 
     // Cleanup.

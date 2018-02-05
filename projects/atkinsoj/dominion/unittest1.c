@@ -1,18 +1,29 @@
 #include <assert.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include "dominion.h"
 #include "dominion_helpers.h"
+#include "testSuite.h"
 
-/*********************************************************************
-** Program Filename:
-** Author: Jon Atkinson
-** Date: 1/27/2018
-** Description:
-** Input:
-** Output:
-*********************************************************************/
+int testShuffleEmptyDeck() {
 
+    // Build a canned game state.
+    struct gameState *state = malloc(sizeof(struct gameState));
+    state->numPlayers = 2;
+
+    // Create an empty deck for player 1.
+    int player = 1;
+    state->deckCount[player] = 0;
+
+    int ret = shuffle(player, state);
+
+    // Cleanup.
+    free(state);
+
+    // Test oracle: confirm the function returned an error.
+    int r = 0;
+    r += assertTrue(ret == -1, "Function return value is -1");
+    return r;
+}
 
 /*********************************************************************
 ** Function:
@@ -27,15 +38,6 @@ int testShuffle() {
     // Build a canned game state. Mostly adapted from initializeGame().
     struct gameState* state = malloc(sizeof(struct gameState));
     state->numPlayers = 2;
-
-    // TODO: Do I need to initialize the supply cards?
-    state->supplyCount[curse] = 10;
-    state->supplyCount[estate] = 8;
-    state->supplyCount[duchy] = 8;
-    state->supplyCount[province] = 8;
-    state->supplyCount[copper] = 46;  // 60 - (7 * # of players)
-    state->supplyCount[silver] = 40;
-    state->supplyCount[gold] = 30;
 
     // Create all of the cards for player 1 in the discard pile.
     // TODO: Add a separate test case for a non-empty deck.
@@ -68,11 +70,6 @@ int testShuffle() {
 
 
     int ret = shuffle(player, state);
-
-    // FIXME: Improve log statements.
-    printf("Deck and discard counts after shuffle: %d, %d\n",
-            state->deckCount[player],
-            state->discardCount[player]);
 
     // Test oracle 1: confirm all of the discards are moved to the deck.
     int r = 0;
