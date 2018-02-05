@@ -1,3 +1,9 @@
+#include <assert.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include "dominion.h"
+#include "dominion_helpers.h"
+
 /*********************************************************************
 ** Program Filename:
 ** Author: Jon Atkinson
@@ -7,6 +13,7 @@
 ** Output:
 *********************************************************************/
 
+
 /*********************************************************************
 ** Function:
 ** Description:
@@ -15,7 +22,7 @@
 ** Pre-Conditions:
 ** Post-Conditions:
 *********************************************************************/
-void testFullDeckCount()
+int testFullDeckCount()
 {
     // Build a canned game state and full deck for a player.
     struct gameState* state = malloc(sizeof(struct gameState));
@@ -40,6 +47,12 @@ void testFullDeckCount()
 
     int ret = fullDeckCount(player, gold, state);
 
+    // Cleanup.
+    free(state);
+
     // Test oracle: count should be 6.
-    assert(ret == 3 + 2 + 1);
+    int r = 0;
+    r += assertTrue(ret == 3 + 2 + 1, "Function return value is 6");
+
+    return r;
 }

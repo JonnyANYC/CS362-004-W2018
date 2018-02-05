@@ -1,3 +1,9 @@
+#include <assert.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include "dominion.h"
+#include "dominion_helpers.h"
+
 /*********************************************************************
 ** Program Filename:
 ** Author: Jon Atkinson
@@ -6,16 +12,6 @@
 ** Input:
 ** Output:
 *********************************************************************/
-
-int addCards(int* cardPile, int card, int cardCount)
-{
-    for (int i = 0; i < cardCount; i++)
-    {
-        state->cardPile[i] = card;
-    }
-
-    return cardCount;
-}
 
 
 /*********************************************************************
@@ -26,8 +22,8 @@ int addCards(int* cardPile, int card, int cardCount)
 ** Pre-Conditions:
 ** Post-Conditions:
 *********************************************************************/
-void testShuffle()
-{
+int testShuffle() {
+
     // Build a canned game state. Mostly adapted from initializeGame().
     struct gameState* state = malloc(sizeof(struct gameState));
     state->numPlayers = 2;
@@ -44,17 +40,21 @@ void testShuffle()
     // Create all of the cards for player 1 in the discard pile.
     // TODO: Add a separate test case for a non-empty deck.
     int player = 1;
-    state->deckCount[player] = 0;
+
     state->discardCount[player] = 0;
+    state->deckCount[player] = 0;
+
+    // 3 estate cards at the beginning of the player's deck.
     for (int j = 0; j < 3; j++)
     {
-        state->discard[player][j] = estate;
-        state->discardCount[player]++;
+        state->deck[player][j] = estate;
+        state->deckCount[player]++;
     }
+    // 7 copper cards at the end of the player's deck.
     for (int j = 3; j < 10; j++)
     {
-        state->discard[player][j] = copper;
-        state->discardCount[player]++;
+        state->deck[player][j] = copper;
+        state->deckCount[player]++;
     }
 
     //initialize first player's turn
@@ -66,10 +66,6 @@ void testShuffle()
     state->whoseTurn = 0;
     state->handCount[state->whoseTurn] = 0;
 
-    // FIXME: Improve log statements.
-    printf("Deck and discard counts before shuffle: %d, %d\n",
-            state->deckCount[player],
-            state->discardCount[player]);
 
     int ret = shuffle(player, state);
 
@@ -79,23 +75,24 @@ void testShuffle()
             state->discardCount[player]);
 
     // Test oracle 1: confirm all of the discards are moved to the deck.
-    assert(ret == 0);
-    assert(state->discardCount[player] == 0);
-    assert(state->deckCount[player] == 3 + 10);
+    int r = 0;
+    r += assertTrue(ret == 0, "Function return value is 0");
+    r += assertTrue(state->discardCount[player] == 0, "Discard count is 0");
+    r += assertTrue(state->deckCount[player] == 3 + 7, "Deck count is 10");
 
     // Test oracle 2: count the # of estates and coppers.
     int estateCount = 0;
     int copperCount = 0;
     int orderChanged = 0;
-    for (int i = 0; i < state->discardCount[player]; i++)
+    for (int i = 0; i < state->deckCount[player]; i++)
     {
-        if (state->deck[player][j] == estate) {
+        if (state->deck[player][i] == estate) {
             estateCount++;
             if (i > 2)
             {
                 orderChanged = 1;
             }
-        } else if (state->deck[player][j] == copper)
+        } else if (state->deck[player][i] == copper)
         {
             copperCount++;
             if (i < 3)
@@ -105,18 +102,21 @@ void testShuffle()
         } else
         {
             // Found a card that wasn't in the original discard pile. Fail test.
-            assert(state->deck[player][j] == copper);
+            r += assertTrue(state->deck[player][i] == copper, "No new cards introduced");
         }
     }
 
-    assert(estateCount == 3);
-    assert(copperCount == 10);
+    r += assertTrue(estateCount == 3, "estateCount is 3");
+    r += assertTrue(copperCount == 7, "copperCount is 7");
+
 
     // Test oracle 3: confirm the order has changed.
     // Note: this test will fail on very rare cases where the
     // shuffle is identical to the input state.
-    assert(orderChanged == 1);
+    r += assertTrue(orderChanged == 1, "the order of the cards was changed");
 
     // Cleanup.
     free(state);
+
+    return r;
 }
