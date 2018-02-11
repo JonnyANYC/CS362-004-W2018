@@ -35,6 +35,15 @@ testSuite: unittest?.c cardtest?.c testSuite.c dominion.o rngs.o
 	gcov dominion.c >> unittestresults.out
 	cat dominion.c.gcov >> unittestresults.out
 
+testHelper.o: testHelper.h testHelper.c
+    gcc -c testHelper.c -g  $(CFLAGS)
+
+testRandom: randomtest*.c dominion.o rngs.o testHelper.o
+    gcc -o randomtestadventurer -g randomtestadventurer.c dominion.o rngs.o testHelper.o
+    ./randomtestadventurer > randomtestadventurer.out
+	gcov randomtestadventurer.c >> randomtestadventurer.out
+	cat randomtestadventurer.c.gcov >> randomtestadventurer.out
+
 player: player.c interface.o
 	gcc -o player player.c -g  dominion.o rngs.o interface.o $(CFLAGS)
 
