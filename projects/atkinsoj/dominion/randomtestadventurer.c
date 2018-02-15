@@ -9,22 +9,30 @@
 // FIXME: Should I test cardEffect() or cardEffectAdventurer()?
 // FIXME: If the former, should I randomize everything?
 
-int main() {
+void testMain(int iterations, int seed) {
 
-    // srand(time(NULL));
-    // FIXME: debug
-    srand(1);
+    if (seed == -1) {
+        // If no seed provided, use the system clock.
+        seed = (int)time(NULL);
+    }
+    srand(seed);
+
+    printf("Starting test of %d iterations with seed %d.\n", iterations, seed);
 
     int card = adventurer;
     struct gameState G, initialG;
     int playerCount;
     int choice1, choice2, choice3, handPos;
+//    char gameStateSummary[150];
+    int r, totalFailedCases = 0;
+    int rndSum, rnd1 = -1, rnd2 = -1, rnd3 = -1;
+    int currentCard, countTreasureCards;
+    int i, p, j;
 
     // TODO: Extract method.
 
     // Run the test many times.
-    int i;
-    for (i = 0; i < 20000; i++) {
+    for (i = 0; i < iterations; i++) {
 
         // Start with a completely random gameState.
         randomizeGameState(G);
@@ -36,76 +44,126 @@ int main() {
 
         // Random but sane state for the player piles.
         // TODO: Extract method
-        int p;
+        rndSum = MAX_HAND + 1;
         for (p = 0; p < playerCount; p++) {
-
-            // The hand must be non-empty to play a card.
-            // And save cards for other piles. (1 .. MAX_HAND - 2)
-            G.handCount[p] = rand() % (MAX_HAND - 3) + 1;
-            //randomizePile(G.hand[p], G.handCount[p]);
-
-            G.deckCount[p] = rand() % (MAX_DECK - G.handCount[p]);
-            randomizePile(G.deck[p], G.deckCount[p]);
-
-            if (MAX_DECK - G.handCount[p] - G.deckCount[p] <= 0) {
-                G.discardCount[p] = 0;
-                //randomizePile(G.discard[p], G.discardCount[p]);
-            } else {
-                G.discardCount[p] = rand() % (MAX_DECK - G.handCount[p] - G.deckCount[p]);
+            // Pick random counts for each player's hand that don't overload the deck.
+            // This includes boundaries of 0 and a sum of MAX_HAND
+            while (rndSum > MAX_HAND) {
+                rnd1 = rand() % MAX_HAND;
+                rnd2 = rand() % MAX_HAND;
+                rnd3 = rand() % MAX_HAND;
+                rndSum = rnd1 + rnd2 + rnd3;
             }
+
+            G.handCount[p] = rnd1;
+            G.deckCount[p] = rnd2;
+            G.discardCount[p] = rnd3;
+            // The code can't process invalid cards, so let's sanitize.
+            randomizePile(G.deck[p], G.deckCount[p]);
+            randomizePile(G.discard[p], G.discardCount[p]);
         }
 
         // Random but sane state for the current turn
-        handPos = rand() % G.handCount[G.whoseTurn];
-
-        // FIXME: Debug
-        printf("iter %d: active player %d of %d has: deck %d discard %d hand %d actions %d buys %d played %d handpos %d\n", i, G.whoseTurn, playerCount, G.deckCount[G.whoseTurn], G.discardCount[G.whoseTurn], G.handCount[G.whoseTurn], G.numActions, G.numBuys, G.playedCardCount, handPos);
+        if (G.handCount[G.whoseTurn] == 0) {
+            // Set handPos manually to avoid the divide-by-zero error.
+            handPos = 0;
+        } else {
+            handPos = rand() % G.handCount[G.whoseTurn]; // rand() % (MAX_DECK - G.handCount[G.whoseTurn] - G.deckCount[G.whoseTurn] - G.discardCount[G.whoseTurn] - 2) + 1; // G.handCount[G.whoseTurn];
+        }
 
         // Randomize choice1, choice2, and choice3
-        // The last card in the CARD enum is the highest acceptable value.
-        choice1 = rand() % (LAST_CARD + 1);
-        choice2 = rand() % (LAST_CARD + 1);
-        choice3 = rand() % (LAST_CARD + 1);
+        choice1 = rand() % 256;
+        choice2 = rand() % 256;
+        choice3 = rand() % 256;
 
         // FIXME: randomize bonus
 
         // Clone G so I can compare it. Logic taken from Lesson 11.
         memcpy(&initialG, &G, sizeof(struct gameState));
 
+        // printf("game state: %s\n", gameStateSummary);
+
         int result = cardEffect(card, choice1,choice2,choice3, &G, handPos, &p);
 
-        //int result = drawCard(G.whoseTurn, &G);
-
         // Test oracle 1: basics.
-        assertEqual(0, result, "Response value is 0");
-        assertEqual(initialG.whoseTurn, G.whoseTurn, "The player turn is unchanged");
-        assertEqual(initialG.numPlayers, G.numPlayers, "player count is unchanged");
+        r = 0;
+        r += assertEqual(0, result, "Response value is 0");
+        r += assertEqual(initialG.whoseTurn, G.whoseTurn, "The player turn is unchanged");
+        r += assertEqual(initialG.numPlayers, G.numPlayers, "player count is unchanged");
 
         // Test oracle 2: validate changes for the current player.
-        assertTrue(G.handCount[G.whoseTurn] > initialG.handCount[G.whoseTurn], "handCount increased");
-        assertTrue(G.handCount[G.whoseTurn] < initialG.handCount[G.whoseTurn] + 3, "handCount increased by 2 or less.");
-        assertTrue(G.discardCount[G.whoseTurn] > initialG.discardCount[G.whoseTurn] + 1, "discardCount increased by 2 at least");
-        assertTrue(G.deckCount[G.whoseTurn] < initialG.deckCount[G.whoseTurn] - 1, "deckCount decreased by at least 2.");
 
-        assertEqual(initialG.numActions, G.numActions, "numActions is unchanged");
-        assertEqual(initialG.numBuys, G.numBuys, "numBuys is unchanged");
-        assertEqual(initialG.playedCardCount, G.playedCardCount, "playedCardCount is unchanged");
-
-        // FIXME: Handle reshuffles of the deck.
-
-        // FIXME: Not checking the actual cards yet!
-
-        // Test oracle 3: validate no changes for the other players.
-        // TODO: extract method
-        for (p = 0; p < playerCount && p != G.whoseTurn; p++) {
-
-            assertEqual(initialG.handCount[p], G.handCount[p], "handCount is unchanged for other players.");
-            assertEqual(initialG.discardCount[p], G.discardCount[p], "discardCount is unchanged for other players.");
-            assertEqual(initialG.deckCount[p], G.deckCount[p], "deckCount is unchanged for other players.");
+        // Verify there are 2 additional treasure cards in the hand now.
+        countTreasureCards = 0;
+        for (j = initialG.handCount[G.whoseTurn]; j < MAX_HAND && j < G.handCount[G.whoseTurn]; j++) {
+            currentCard = G.hand[G.whoseTurn][j];
+            if (currentCard == gold || currentCard == silver || currentCard == copper) {
+                countTreasureCards++;
+            } else {
+                // A non-treasure card was added to the hand. Fail an assert.
+                r += assertEqual(gold, currentCard, "Only treasure cards added to the hand");
+            }
         }
 
-        // FIXME: more tests please!
+        if (countTreasureCards < 2) {
+            // Check if there are no more treasure cards in the deck, since this is valid.
+            for (j = 0; j < G.deckCount[G.whoseTurn]; j++) {
+                currentCard = G.deck[G.whoseTurn][j];
+                assertTrue(currentCard != gold && currentCard != silver && currentCard != copper,
+                           "Less than 2 treasure cards added to the hand because deck has no more");
+            }
+        } else {
+            r += assertEqual(2, countTreasureCards, "2 treasure cards added to the hand");
+        }
+
+        r += assertEqual(initialG.deckCount[G.whoseTurn] + initialG.discardCount[G.whoseTurn],
+                         G.deckCount[G.whoseTurn] + G.discardCount[G.whoseTurn] + countTreasureCards,
+                        "After shuffle, deck + discard count is equivalent (less the treasures)");
+
+        r += assertEqual(initialG.numActions, G.numActions, "numActions is unchanged");
+        r += assertEqual(initialG.numBuys, G.numBuys, "numBuys is unchanged");
+        r += assertEqual(initialG.playedCardCount, G.playedCardCount, "playedCardCount is unchanged");
+
+        // Test oracle 3: validate no changes for the other players.
+
+        // TODO: extract method
+        for (p = 0; p < playerCount; p++) {
+
+            if (p == G.whoseTurn) {
+                // Skip the active player, since that player was checked previously.
+                continue;
+            }
+            r += assertEqual(initialG.handCount[p], G.handCount[p], "handCount is unchanged for other players.");
+            r += assertEqual(0, memcmp(initialG.hand[p], G.hand[p], sizeof(int) * MAX_HAND),
+                            "the hand is unchanged for all other players");
+            r += assertEqual(initialG.discardCount[p], G.discardCount[p], "discardCount is unchanged for other players.");
+            r += assertEqual(0, memcmp(initialG.discard[p], G.discard[p], sizeof(int) * MAX_DECK),
+                             "the discard pile is unchanged for all other players");
+            r += assertEqual(initialG.deckCount[p], G.deckCount[p], "deckCount is unchanged for other players.");
+            r += assertEqual(0, memcmp(initialG.deck[p], G.deck[p], sizeof(int) * MAX_DECK),
+                             "the deck is unchanged for all other players");
+        }
+
+        if (r < 0) {
+            totalFailedCases++;
+            printf("Failed test for: ");
+            printGameStateSummary(i, playerCount, handPos, G, initialG);
+        }
+
+        // TODO: more tests please!
 
     }
-    // FIXME: Output results
+
+    // Output results
+    if (totalFailedCases > 0) {
+        printf("TEST SUITE FAILED: %d failures out of %d cases. (Seed: %d)\n",
+               totalFailedCases, iterations, seed);
+    } else {
+        printf("ALL TESTS PASSED for %d cases.\n", iterations);
+    }
+}
+
+
+int main() {
+    testMain(200000, -1);    // 1518600903 1518601501);
 }

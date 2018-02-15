@@ -44,3 +44,16 @@ void randomizePile(int* cardPile, int cardCount)
         cardPile[i] = rand() % (LAST_CARD + 1);
     }
 }
+
+void printGameStateSummary(int i, int playerCount, int handPos,
+                           struct gameState G, struct gameState initialG) {
+    printf("iter %d: active player %d of %d: deck %d -> %d "
+            "discard %d -> %d hand %d -> %d actions %d -> %d "
+            "buys %d -> %d played %d -> %d handpos %d\n",
+           i, G.whoseTurn, playerCount,
+           initialG.deckCount[G.whoseTurn], G.deckCount[G.whoseTurn],
+           initialG.discardCount[G.whoseTurn], G.discardCount[G.whoseTurn],
+           initialG.handCount[G.whoseTurn], G.handCount[G.whoseTurn],
+           initialG.numActions, G.numActions, initialG.numBuys, G.numBuys,
+           initialG.playedCardCount, G.playedCardCount, handPos);
+}

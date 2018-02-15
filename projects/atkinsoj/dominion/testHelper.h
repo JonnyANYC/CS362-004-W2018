@@ -16,4 +16,7 @@ void randomizeGameState(struct gameState G);
 
 void randomizePile(int* cardPile, int cardCount);
 
+void printGameStateSummary(int i, int playerCount, int handPos,
+                           struct gameState G, struct gameState initialG);
+
 #endif //_TESTHELPER_H
