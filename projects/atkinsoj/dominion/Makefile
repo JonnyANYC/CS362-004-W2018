@@ -40,9 +40,20 @@ testHelper.o: testHelper.h testHelper.c
 
 testRandom: randomtest*.c dominion.o rngs.o testHelper.o
 	gcc -o randomtestadventurer -g randomtestadventurer.c dominion.o rngs.o testHelper.o $(CFLAGS)
-	./randomtestadventurer # > randomtestadventurer.out
-	# gcov randomtestadventurer.c >> randomtestadventurer.out ## FIXME debug
-	# cat randomtestadventurer.c.gcov >> randomtestadventurer.out  ## FIXME debug
+	rm -f dominion.gcda dominion.c.gcov
+	./randomtestadventurer > randomtestadventurer.out
+	gcov dominion.c >> randomtestadventurer.out
+	cat dominion.c.gcov >> randomtestadventurer.out
+	gcc -o randomtestcard1 -g randomtestcard1.c dominion.o rngs.o testHelper.o $(CFLAGS)
+	rm -f dominion.gcda dominion.c.gcov
+	./randomtestcard1 > randomtestcard1.out
+	gcov dominion.c >> randomtestcard1.out
+	cat dominion.c.gcov >> randomtestcard1.out
+	gcc -o randomtestcard2 -g randomtestcard2.c dominion.o rngs.o testHelper.o $(CFLAGS)
+	rm -f dominion.gcda dominion.c.gcov
+	./randomtestcard2 > randomtestcard2.out
+	gcov dominion.c >> randomtestcard2.out
+	cat dominion.c.gcov >> randomtestcard2.out
 
 player: player.c interface.o
 	gcc -o player player.c -g  dominion.o rngs.o interface.o $(CFLAGS)

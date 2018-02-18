@@ -1,3 +1,4 @@
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -5,9 +6,6 @@
 #include "dominion.h"
 #include "dominion_helpers.h"
 #include "testHelper.h"
-
-// FIXME: Should I test cardEffect() or cardEffectAdventurer()?
-// FIXME: If the former, should I randomize everything?
 
 void testMain(int iterations, int seed) {
 
@@ -24,7 +22,7 @@ void testMain(int iterations, int seed) {
     int playerCount;
     int choice1, choice2, choice3, handPos;
 //    char gameStateSummary[150];
-    int r, totalFailedCases = 0;
+    int result, r, totalFailedCases = 0;
     int rndSum, rnd1 = -1, rnd2 = -1, rnd3 = -1;
     int currentCard, countTreasureCards;
     int i, p, j;
@@ -76,14 +74,22 @@ void testMain(int iterations, int seed) {
         choice2 = rand() % 256;
         choice3 = rand() % 256;
 
+        int temphand[MAX_HAND];
+        for (int q = 0; q < MAX_HAND; q++) {
+            temphand[q] = 0; // rand() % INT_MAX; // temphand[MAX_HAND]
+        }
+        int drawntreasure = 0; // rand() % INT_MAX;  // always zero
+
         // FIXME: randomize bonus
+
 
         // Clone G so I can compare it. Logic taken from Lesson 11.
         memcpy(&initialG, &G, sizeof(struct gameState));
 
-        // printf("game state: %s\n", gameStateSummary);
+        // FIXME: trying cardEffectAdventurer()
+        result = cardEffectAdventurer(&G, G.whoseTurn, temphand, drawntreasure);
 
-        int result = cardEffect(card, choice1,choice2,choice3, &G, handPos, &p);
+        // int result = cardEffect(card, choice1,choice2,choice3, &G, handPos, &p);
 
         // Test oracle 1: basics.
         r = 0;
@@ -109,8 +115,8 @@ void testMain(int iterations, int seed) {
             // Check if there are no more treasure cards in the deck, since this is valid.
             for (j = 0; j < G.deckCount[G.whoseTurn]; j++) {
                 currentCard = G.deck[G.whoseTurn][j];
-                assertTrue(currentCard != gold && currentCard != silver && currentCard != copper,
-                           "Less than 2 treasure cards added to the hand because deck has no more");
+                r += assertTrue(currentCard != gold && currentCard != silver && currentCard != copper,
+                                "Less than 2 treasure cards added to the hand because deck has no more");
             }
         } else {
             r += assertEqual(2, countTreasureCards, "2 treasure cards added to the hand");
@@ -165,5 +171,5 @@ void testMain(int iterations, int seed) {
 
 
 int main() {
-    testMain(200000, -1);    // 1518600903 1518601501);
+    testMain(20, -1);    // 1518600903 1518601501);
 }
