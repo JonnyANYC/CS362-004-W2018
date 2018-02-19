@@ -6,8 +6,6 @@
 #include "dominion_helpers.h"
 #include "testHelper.h"
 
-// FIXME: Should I test cardEffect() or cardEffectAdventurer()?
-// FIXME: If the former, should I randomize everything?
 
 void testMain(int iterations, int seed) {
 
@@ -21,8 +19,7 @@ void testMain(int iterations, int seed) {
 
     int card = smithy;
     struct gameState G, initialG;
-    int playerCount;
-    int choice1, choice2, choice3, handPos;
+    int playerCount, handPos;
     int result, r, totalFailedCases = 0;
     int rndSum, rnd1 = -1, rnd2 = -1, rnd3 = -1;
     int currentCard;
@@ -71,21 +68,12 @@ void testMain(int iterations, int seed) {
         handPos = rand() % G.handCount[G.whoseTurn];
         G.hand[G.whoseTurn][handPos] = card;
 
-        // Randomize choice1, choice2, and choice3
-        choice1 = rand() % 256;
-        choice2 = rand() % 256;
-        choice3 = rand() % 256;
-
-        // FIXME: randomize bonus
 
         // Clone G so I can compare it. Logic taken from Lesson 11.
         memcpy(&initialG, &G, sizeof(struct gameState));
 
-        // FIXME: using cardEffectSmithy
 
         result = cardEffectSmithy(&G, handPos, G.whoseTurn);
-
-//        int result = cardEffect(card, choice1,choice2,choice3, &G, handPos, &p);
 
 
         // Test oracle 1: basics.
@@ -166,5 +154,5 @@ void testMain(int iterations, int seed) {
 
 
 int main() {
-    testMain(200000, -1);
+    testMain(20000, -1);
 }
