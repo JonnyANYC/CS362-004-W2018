@@ -1,7 +1,7 @@
 Teammate Code Bug Report 1
 ==============================
 
-Title: When a Smithy is played, the active player's hand increases by 3 cards instead of 2.
+Title: When a Smithy is played, an extra card seems to be played into the player's hand
 
 Class: Bug
 
@@ -10,36 +10,75 @@ Reported By: Jon Atkinson
 Email: atkinsoj@oregonstate.edu
 
 
-Product:                        Version:
-Platform:                       Version:
-Browser:                        Version:
+Product: Dominion               Version: https://github.com/JonnyANYC/CS362-004-W2018/ @094ce9b
+Platform: Windows 10            Version: 1709
+Browser: n/a                    Version:
 URL:
 
 Is it reproducible: Yes
 
+
 Description
 ===========
 
+I wrote a fuzzer that tests the handling of the Smithy card. My fuzzer sets up a random game state,
+and then inserts a smithy into the hand. It then calls the card-effect logic for smithy.
+
+All but one of my random test cases fail with the same two failed assertions:
+
+{quote}
+Failed assertion because 147 != 148: hand count increased by 2 (+ 3 - 1 played Smithy)
+Failed assertion because 11 != 2: Second to last card in hand is the card previously on top of the deck
+Failed test for: iter 0: active player 0 of 1: deck 251 -> 247 discard 71 -> 71 hand 145 -> 148 actions 224 -> 224 buys 0 -> 0 played 298 -> 299 handpos 17
+{quote}
+
+The game state reported after the failed assertions indicates that the player's hand increased by three.
+In the above example, it increased from 145 cards to 148 cards. This is not expected, since it should only
+increase by 2: +3 for the three cards granted by smithy, minus one card because the smithy card is played.
+
+I also have a unit test that sets up a canned hand and then plays a smithy. This unit test reports that
+the deck is reduced by one card too many. This also suggests that an extra card is played into the
+player's hand. This is not the expected behavior.
 
 
 Steps to Produce/Reproduce
 --------------------------
 
+I have a unit test for the smithy card effect in cardtest1.c. This code sets up a test deck for player 1:
+
+{code}
+    addCards(state->deck[player], copper, 13);
+    state->deckCount[player] = 13;
+    state->deck[player][0] = gold;
+    state->deck[player][4] = gold;
+    state->deck[player][5] = gold;
+{code}
+
+The addCards() helper function just repeats the given card for the given number of times.
+
+The smithy card grants +3 cards, so this test deck should be reduced to 10 cards. However, my unit test
+reports that it is reduced to 9 cards. This also suggests that the player's hand is increased by one
+card too many.
 
 
 Expected Results
 ----------------
 
+For my unit test, I expect the deck to have 10 cards after the smithy is played. For my random tests,
+I expect the hand to increase by 2 cards.
 
 
 Actual Results
 --------------
 
+My unit test shows that the deck has 9 cards after the smithy is played. And all of my random tests
+indicate that the hand increases by 3 cards.
 
 
 Workarounds
 -----------
 
+None known.
 
 
 Attachments
@@ -61,51 +100,84 @@ Other Information
 Teammate Code Bug Report 2
 ==============================
 
-Title:
+Title: scoreFor() calculates the score incorrectly.
 
-Class:
-e.g. "Feature Request", "System Error", "Serious Bug"
-
-Date:
-Reported By:
-Email:
+Class: Bug
 
 
-Product:                        Version:
-Platform:                       Version:
-Browser:                        Version:
+Date: 3 March 2018
+Reported By: Jon Atkinson
+Email: atkinsoj@oregonstate.edu
+
+
+Product: Dominion               Version: https://github.com/JonnyANYC/CS362-004-W2018/ @094ce9b
+Platform: Windows 10            Version: 1709
+Browser: n/a                    Version:
 URL:
 
-Is it reproducible: Yes / Occasionally / One Time / No
+Is it reproducible: Yes
+
 
 Description
 ===========
 
+I wrote a unit test to verify the results of the scoreFor() function. My unit test creates a
+simple game state consisting of three victory cards, plus one curse.
+
+This hand should be scored as 9 points. However, scoreFor() returns a score of 5 points for this hand.
 
 
 Steps to Produce/Reproduce
 --------------------------
 
+I ran a unit test using the following test gameState:
+
+{code}
+    int player = 1;
+    addCards(state->deck[player], copper, 13);
+    state->deckCount[player] = 13;
+    state->deck[player][0] = province;
+    state->deck[player][4] = estate;
+    state->deck[player][5] = duchy;
+
+    addCards(state->hand[player], copper, 5);
+    state->handCount[player] = 5;
+
+    addCards(state->discard[player], copper, 2);
+    state->discardCount[player] = 2;
+    state->discard[player][1] = curse;
+{code}
 
 
 Expected Results
 ----------------
 
+scoreFor() should score this hand as 9 points:
+* province: +6
+* estate: +1
+* duchy: +3
+* curse: -1
 
 
 Actual Results
 --------------
 
+scoreFor() returns a score of 5 for this hand.
 
 
 Workarounds
 -----------
 
+None known.
 
 
 Attachments
 -----------
 
+Output from my unittest4:
+
+testing scoreFor():
+Failed assertion because 9 != 5: Score is 9.
 
 
 Other Information
