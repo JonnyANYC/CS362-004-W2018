@@ -1,250 +1,160 @@
-// Ian Lumiere
-// February 17, 2018
-// CS 362
-// Assignment 4
-// randomtestadventurer.c
-// This program implements a random tester for the adventurer card
-
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
 #include "dominion.h"
 #include "dominion_helpers.h"
-#include "rngs.h"
-#include <time.h>
-#include <string.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <stdio.h>
+#include "testHelper.h"
 
-// Global Test Result Trackers
-int drawFailures = 0;
-int handCountFailures = 0;
-int deckCountFailures = 0;
-int cardEffectFailures = 0;
-int discardFailures = 0;
-int treasureFailures = 0;
-int shuffleFailures = 0;
-int failedTestRuns = 0;
 
-// This is the actual test suite that takes a random input and tests adventurer and its related functions
-void adventurerTest(struct gameState *currentGameTest, int playerCount){
-    // Copy the gameState for comparison testing
-    int coin_bonus = 0;
-    struct gameState copyGameTest;
-    memcpy(&copyGameTest, currentGameTest, sizeof(struct gameState));
-    
-    // Set a flag to see if the current test run fails
-    int currentFail = 0;
-    
-    // Set up the treasureTracker
-    int treasureTracker = 0;
-    
-    // Set up the testHand for checking the treasures drawn
-    int testHand[500];
-    int cardIndex = 0;
-    
-    // Run the card function on the currentGameTest
-    int cardEffectTestResult = cardEffect(adventurer, 0, 0, 0, currentGameTest, 0, &coin_bonus);
-    
-    // Manually call the functions performed by the adventurer card
-    // Run the loop until the player has drawn 2 treasure cards
-    while(treasureTracker < 2){
-        // Check to see if the deck needs to be refilled with a shuffle
-        if(copyGameTest.deckCount[playerCount] == 0){
-            int shuffleTestResult = shuffle(playerCount, &copyGameTest);
-            
-            if(copyGameTest.deckCount[playerCount] >= 1 && shuffleTestResult == -1){
-                shuffleFailures += 1;
-                currentFail += 1;
+void testMain(int iterations, int seed) {
+
+    if (seed == -1) {
+        // If no seed provided, use the system clock.
+        seed = (int)time(NULL);
+    }
+    srand(seed);
+
+    printf("Starting test of %d iterations with seed %d.\n", iterations, seed);
+
+    struct gameState G, initialG;
+    int playerCount, handPos;
+    int result, r, totalFailedCases = 0;
+    int rndSum, rnd1 = -1, rnd2 = -1, rnd3 = -1;
+    int currentCard, countTreasureCards;
+    int i, p, j;
+
+    // TODO: Extract method.
+
+    // Run the test many times.
+    for (i = 0; i < iterations; i++) {
+
+        // Start with a completely random gameState.
+        randomizeGameState(G);
+
+        // Random but sane player count (1 .. MAX_PLAYERS)
+        playerCount = rand() % (MAX_PLAYERS - 1) + 1;
+
+        G.whoseTurn = rand() % playerCount;
+
+        // Random but sane state for the player piles.
+        // TODO: Extract method
+        rndSum = MAX_HAND + 1;
+        for (p = 0; p < playerCount; p++) {
+            // Pick random counts for each player's hand that don't overload the deck.
+            // This includes boundaries of 0 and a sum of MAX_HAND
+            while (rndSum > MAX_HAND) {
+                rnd1 = rand() % MAX_HAND;
+                rnd2 = rand() % MAX_HAND;
+                rnd3 = rand() % MAX_HAND;
+                rndSum = rnd1 + rnd2 + rnd3;
+            }
+
+            G.handCount[p] = rnd1;
+            G.deckCount[p] = rnd2;
+            G.discardCount[p] = rnd3;
+            // The code can't process invalid cards, so let's sanitize.
+            randomizePile(G.deck[p], G.deckCount[p]);
+            randomizePile(G.discard[p], G.discardCount[p]);
+        }
+
+        // Random but sane state for the current turn
+        if (G.handCount[G.whoseTurn] == 0) {
+            // Set handPos manually to avoid the divide-by-zero error.
+            handPos = 0;
+        } else {
+            handPos = rand() % G.handCount[G.whoseTurn];
+        }
+
+        int temphand[MAX_HAND];
+        int drawntreasure = 0;  // always zero in the code
+
+
+        // Clone G so I can compare it. Logic taken from Lesson 11.
+        memcpy(&initialG, &G, sizeof(struct gameState));
+
+        result = cardEffectAdventurer(&G, G.whoseTurn, temphand, drawntreasure);
+
+
+        // Test oracle 1: basics.
+        r = 0;
+        r += assertEqual(0, result, "Response value is 0");
+        r += assertEqual(initialG.whoseTurn, G.whoseTurn, "The player turn is unchanged");
+        r += assertEqual(initialG.numPlayers, G.numPlayers, "player count is unchanged");
+
+        // Test oracle 2: validate changes for the current player.
+
+        // Verify there are 2 additional treasure cards in the hand now.
+        countTreasureCards = 0;
+        for (j = initialG.handCount[G.whoseTurn]; j < MAX_HAND && j < G.handCount[G.whoseTurn]; j++) {
+            currentCard = G.hand[G.whoseTurn][j];
+            if (currentCard == gold || currentCard == silver || currentCard == copper) {
+                countTreasureCards++;
+            } else {
+                // A non-treasure card was added to the hand. Fail an assert.
+                r += assertEqual(gold, currentCard, "Only treasure cards added to the hand");
             }
         }
-        
-        // Draw a card
-        int drawCardTest1 = drawCard(playerCount, &copyGameTest);
-        
-        if(drawCardTest1 == -1 && copyGameTest.deckCount[playerCount] != 0){
-            drawFailures += 1;
-            currentFail += 1;
+
+        if (countTreasureCards < 2) {
+            // Check if there are no more treasure cards in the deck, since this is valid.
+            for (j = 0; j < G.deckCount[G.whoseTurn]; j++) {
+                currentCard = G.deck[G.whoseTurn][j];
+                r += assertTrue(currentCard != gold && currentCard != silver && currentCard != copper,
+                                "Less than 2 treasure cards added to the hand because deck has no more");
+            }
+        } else {
+            r += assertEqual(2, countTreasureCards, "2 treasure cards added to the hand");
         }
-        
-        // Check if the card drawn was a treasure card, if so, increment the treasureTracker
-        int newCard = copyGameTest.hand[playerCount][copyGameTest.handCount[playerCount] - 1];
-        
-        if(newCard == gold){
-            treasureTracker += 1;
+
+        r += assertEqual(initialG.deckCount[G.whoseTurn] + initialG.discardCount[G.whoseTurn],
+                         G.deckCount[G.whoseTurn] + G.discardCount[G.whoseTurn] + countTreasureCards,
+                        "After shuffle, deck + discard count is equivalent (less the treasures)");
+
+        r += assertEqual(initialG.numActions, G.numActions, "numActions is unchanged");
+        r += assertEqual(initialG.numBuys, G.numBuys, "numBuys is unchanged");
+        r += assertEqual(initialG.playedCardCount, G.playedCardCount, "playedCardCount is unchanged");
+
+        // Test oracle 3: validate no changes for the other players.
+
+        // TODO: extract method
+        for (p = 0; p < playerCount; p++) {
+
+            if (p == G.whoseTurn) {
+                // Skip the active player, since that player was checked previously.
+                continue;
+            }
+            r += assertEqual(initialG.handCount[p], G.handCount[p], "handCount is unchanged for other players.");
+            r += assertEqual(0, memcmp(initialG.hand[p], G.hand[p], sizeof(int) * MAX_HAND),
+                            "the hand is unchanged for all other players");
+            r += assertEqual(initialG.discardCount[p], G.discardCount[p], "discardCount is unchanged for other players.");
+            r += assertEqual(0, memcmp(initialG.discard[p], G.discard[p], sizeof(int) * MAX_DECK),
+                             "the discard pile is unchanged for all other players");
+            r += assertEqual(initialG.deckCount[p], G.deckCount[p], "deckCount is unchanged for other players.");
+            r += assertEqual(0, memcmp(initialG.deck[p], G.deck[p], sizeof(int) * MAX_DECK),
+                             "the deck is unchanged for all other players");
         }
-        else if(newCard == silver){
-            treasureTracker += 1;
+
+        if (r < 0) {
+            totalFailedCases++;
+            printf("Failed test for: ");
+            printGameStateSummary(i, playerCount, handPos, G, initialG);
         }
-        else if(newCard == copper){
-            treasureTracker += 1;
-        }
-        else{
-            // Don't keep the card if it isn't a treasure card
-            testHand[cardIndex] = newCard;
-            copyGameTest.handCount[playerCount]--;
-            cardIndex += 1;
-        }
-        
+
+        // TODO: more tests please!
+
     }
-    
-    // Discard the cards that weren't treasure cards that were drawn
-    while(cardIndex > 0){
-        copyGameTest.discard[playerCount][copyGameTest.discardCount[playerCount]++] = testHand[cardIndex-1];
-        cardIndex -= 1;
+
+    // Output results
+    if (totalFailedCases > 0) {
+        printf("TEST SUITE FAILED: %d failures out of %d cases. (Seed: %d)\n",
+               totalFailedCases, iterations, seed);
+    } else {
+        printf("ALL TESTS PASSED for %d cases.\n", iterations);
     }
-    
-    // Compare the treasure count for the tester and the copy to test if the correct amount of treasure was drawn
-    // Check the hands of each game
-    int j;
-    int currentTreasureCount;
-    int currentCard;
-    for(j = 0; j < currentGameTest->handCount[playerCount]; j++){
-        currentCard = currentGameTest->hand[playerCount][j];
-        if(currentCard == gold){
-            currentTreasureCount += 1;
-        }
-        else if(currentCard == silver){
-            currentTreasureCount += 1;
-        }
-        else if(currentCard == copper){
-            currentTreasureCount += 1;
-        }
-    }
-    
-    int n;
-    int copyTreasureCount;
-    int copyCard;
-    for(n = 0; n < copyGameTest.handCount[playerCount]; n++){
-        copyCard = copyGameTest.hand[playerCount][n];
-        if(copyCard == gold){
-            copyTreasureCount += 1;
-        }
-        else if(copyCard == silver){
-            copyTreasureCount += 1;
-        }
-        else if(copyCard == copper){
-            copyTreasureCount += 1;
-        }
-    }
-    
-    if(currentTreasureCount != copyTreasureCount){
-        treasureFailures += 1;
-        currentFail += 1;
-    }
-    
-    // Check the test results
-    if(cardEffectTestResult != 0){
-        cardEffectFailures += 1;
-        currentFail += 1;
-    }
-    
-    // Check the hand count, deck count, and discard count for the currentGameTest and copyGameTest
-    if(currentGameTest->handCount[playerCount] != copyGameTest.handCount[playerCount]){
-        handCountFailures += 1;
-        currentFail += 1;
-    }
-    
-    if(currentGameTest->deckCount[playerCount] != copyGameTest.deckCount[playerCount]){
-        deckCountFailures += 1;
-        currentFail += 1;
-    }
-    
-    if(currentGameTest->discardCount[playerCount] != copyGameTest.discardCount[playerCount]){
-        discardFailures += 1;
-        currentFail += 1;
-    }
-    
-    // Check to see if there was a failed test, if so, mark the overall test run as a failure
-    if(currentFail > 0){
-        failedTestRuns += 1;
-    }
-    
 }
 
-int main(){
-    // Seed the random number generator
-    srand(time(NULL));
-    
-    // Set up the variables required for the test
-    int numberOfTests = 120000;
-    struct gameState currentGameTest;
-    int playerCount;
-    int treasuresInDeck;
-    
-    printf("This program will test the Adventurer card in dominion.c. Please stand by for results:\n");
-    
-    // Run the loop for the requisite number of times
-    int i;
-    for(i = 0; i < numberOfTests; i++){
-        // Create a game with random initializers
-        // Get a random number of players between 1 and 4
-        playerCount = rand() % 4;
-        
-        int newGame;
-        for(newGame = 0; newGame < sizeof(struct gameState); newGame++){
-            ((char*)&currentGameTest)[newGame] = rand() % 256;
-        }
-        
-        // Get random numbers for the other things set up in a game
-        currentGameTest.whoseTurn = playerCount;
-        currentGameTest.handCount[playerCount] = (rand() % 498) + 3;
-        currentGameTest.deckCount[playerCount] = (rand() % 498) + 3;
-        currentGameTest.discardCount[playerCount] = 0;
-        currentGameTest.playedCardCount = rand() % 499;
-        currentGameTest.numActions = rand() % 10;
-        
-        // Randomly fill deck with treasures (need at least 3)
-        treasuresInDeck = (rand() % (currentGameTest.deckCount[playerCount] - 2)) + 3;
-        int k;
-        int treasureToUse;
-        int treasureTypes[] = {gold, silver, copper};
-        for(k = 0; k < treasuresInDeck; k++){
-            // Randomly choose a treasure card and put it in the player's deck
-            treasureToUse = rand() % 3;
-            
-            // Put in a gold if 0
-            if(treasureToUse == 0){
-                currentGameTest.deck[playerCount][k] = treasureTypes[0];
-            }
-            
-            // Put in a silver if 1
-            else if(treasureToUse == 1){
-                currentGameTest.deck[playerCount][k] = treasureTypes[1];
-            }
-            
-            // Put in a copper if 2
-            else{
-                currentGameTest.deck[playerCount][k] = treasureTypes[2];
-            }
-            
-        }
-        
-        // Run the test suite with the fully built random input
-        adventurerTest(&currentGameTest, playerCount);
-    }
-    
-    // Output the results
-    printf("The following are the results from the test:\n");
-    
-    if(drawFailures + discardFailures + handCountFailures + cardEffectFailures + deckCountFailures + treasureFailures + shuffleFailures > 0){
-        printf("There were %d successful test runs.\nThere were %d failed test runs.\n", numberOfTests - failedTestRuns, failedTestRuns);
-        printf("There were %d failed individual tests!\n", drawFailures + discardFailures + handCountFailures + cardEffectFailures + deckCountFailures + treasureFailures + shuffleFailures);
-        printf("Here is the failure breakdown:\n");
-        printf("cardEffect() failed %d times.\n", cardEffectFailures);
-        printf("There were %d failures to get the correct hand count.\n", handCountFailures);
-        printf("There were %d failures to get the correct deck count.\n", deckCountFailures);
-        printf("There were %d failures to get the correct discard count.\n", discardFailures);
-        printf("There were %d failures to get the correct number of treasures.\n", treasureFailures);
-        printf("There were %d failures to shuffle properly.\n", shuffleFailures);
-        printf("drawCard() failed %d times.\n", drawFailures);
-        
-    }
-    else{
-        printf("There were 0 failed tests!\n There were %d passed tests!\n", numberOfTests);
-        printf("Great news! All tests passed!\n");
-    }
-    
-    printf("See below for the test coverage:\n");
-    
-    return 0;
-}
 
+int main() {
+    testMain(20000, -1);    // 1518600903 1518601501);
+}
