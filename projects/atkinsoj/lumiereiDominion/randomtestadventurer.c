@@ -73,7 +73,7 @@ void testMain(int iterations, int seed) {
         // Clone G so I can compare it. Logic taken from Lesson 11.
         memcpy(&initialG, &G, sizeof(struct gameState));
 
-        result = cardEffectAdventurer(&G, G.whoseTurn, temphand, drawntreasure);
+        result = adventurer_function(&G, handPos);
 
 
         // Test oracle 1: basics.

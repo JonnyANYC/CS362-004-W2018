@@ -73,7 +73,7 @@ void testMain(int iterations, int seed) {
         memcpy(&initialG, &G, sizeof(struct gameState));
 
 
-        result = cardEffectSmithy(&G, handPos, G.whoseTurn);
+        result = smithy_function(&G, handPos);
 
 
         // Test oracle 1: basics.
