@@ -54,9 +54,8 @@ int testSmithy() {
     int playedCardCount = state->playedCardCount;
     r += assertEqual(1, playedCardCount, "One played card.");
     r += assertEqual(smithy, state->playedCards[playedCardCount - 1], "Last played card is a smithy.");
-    // Next two should fail because of intentional bug: 8 cards in hand becomes 9, 5 cards in deck becomes 4.
-    // FIXME: Why is the next one passing?
-    r += assertEqual(5 + 3, state->handCount[player], "8 cards in hand.");
+
+    r += assertEqual(5 + 2, state->handCount[player],  "7 cards in hand. (+3 - 1 discard)");
     r += assertEqual(13 - 3, state->deckCount[player], "10 cards in deck.");
 
     // Cleanup.

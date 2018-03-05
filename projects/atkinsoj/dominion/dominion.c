@@ -703,8 +703,7 @@ int cardEffectCouncilRoom(struct gameState *state, int handPos,
 // +3 Cards
 int cardEffectSmithy(struct gameState *state, int handPos, int currentPlayer)
 {
-  // BUG introduced: <= 3 instead of < 3
-  for (int i = 0; i <= 3; i++)
+  for (int i = 0; i < 3; i++)
   {
     drawCard(currentPlayer, state);
   }
