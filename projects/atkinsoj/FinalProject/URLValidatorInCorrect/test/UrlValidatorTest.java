@@ -1,5 +1,7 @@
 
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Random;
 
 import junit.framework.TestCase;
@@ -45,7 +47,7 @@ public class UrlValidatorTest extends TestCase {
 	   //You can use this function for programming based testing
 
        UrlValidator urlValidator = new UrlValidator(UrlValidator.ALLOW_ALL_SCHEMES);
-       setUpRandom();
+       setUpRandom(-1);
       
        // Perform a simple test to fail fast. 
        assertTrue("Simple test of example URL", urlValidator.isValid("http://www.google.com"));
@@ -57,7 +59,7 @@ public class UrlValidatorTest extends TestCase {
        int successCases = 0, failedCases = 0;
  
        
-       for (int i = 0; i < 800000; i++) {
+       for (int i = 0; i < 8000; i++) {
 
            testUrlBuffer = new StringBuilder();
            expectedResult = true;
@@ -83,13 +85,22 @@ public class UrlValidatorTest extends TestCase {
            expectedResult &= stringPair.valid;
            
            testUrl = testUrlBuffer.toString();
+           System.out.println("About to test with: " + testUrl);  // DEBUG
 
-           result = urlValidator.isValid(testUrl);
-           
-           if ( assertBooleanPart(expectedResult + ": " + testUrl, expectedResult, result) ) {
-               successCases++;
-           } else {
+           try { 
+               result = urlValidator.isValid(testUrl);
+
+               if ( assertBooleanCase(expectedResult + ": " + testUrl, expectedResult, result) ) {
+                   successCases++;
+               } else {
+                   failedCases++;
+               }
+           } catch (Exception e) {
                failedCases++;
+               System.out.println("FAIL: Exception: " + e.toString());
+           } catch (Error e) {
+               failedCases++;
+               System.out.println("FAIL: Error: " + e.toString());
            }
        }
        
@@ -98,7 +109,7 @@ public class UrlValidatorTest extends TestCase {
        assertEquals("No failed cases", 0, failedCases);
    }
    
-   private boolean assertBooleanPart(String message, boolean expected, boolean actual) {
+   private boolean assertBooleanCase(String message, boolean expected, boolean actual) {
        if (expected != actual) { 
            System.out.println("FAIL: " + message);
            return false;
@@ -109,16 +120,46 @@ public class UrlValidatorTest extends TestCase {
 
    private Random _random;
 
-   private void setUpRandom() {
+   private void setUpRandom(long seed) {
+       
        _random = new java.util.Random();
-       long seed = _random.nextLong();
+       
+       if (seed == -1) {
+           seed = _random.nextLong();
+       }
+       
        _random.setSeed(seed);
        System.out.println("Seed set to: " + seed);
    }
    
    private StringPair generateRandomScheme() {
-       
-       return new StringPair("http://", true);
+
+       int whichScheme = _random.nextInt(1000);
+       switch (whichScheme) {
+       case 0:
+           // Generate a scheme of 6 characters of printable ASCII, code points 32 (incl.) to 127 (excl.)
+           StringBuffer randomScheme = new StringBuffer(7);
+           for (int i = 0; i < 6; i++) {
+               randomScheme.appendCodePoint(_random.nextInt(95) + 32);
+           }
+           boolean valid = false;
+           String randomSchemeString = randomScheme.toString();
+           if (randomSchemeString == "http://" 
+               || randomSchemeString == "https://" 
+               || randomSchemeString == "ftp://"
+               || randomSchemeString == "gopher://") {
+               valid = true;
+           }
+           return new StringPair(randomScheme.toString(), valid);
+       case 1: 
+           return new StringPair("https://", true);
+       case 2:
+           return new StringPair("ftp://", true);
+       case 3: 
+           return new StringPair("gopher://", true);
+       default:
+           return new StringPair("http://", true);
+       }
    }
 
    private StringPair generateRandomHostname() {
@@ -129,6 +170,7 @@ public class UrlValidatorTest extends TestCase {
 
        String port = "";
        boolean valid = true;
+       
        if (_random.nextInt(1000) == 0 ) {
            port = ":" + Math.pow(2,16) + _random.nextInt(1000);
            valid = false;
