@@ -1,9 +1,4 @@
-
-
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Random;
-
 import junit.framework.TestCase;
 
 //You can use this as a skeleton for your 3 different test approach
@@ -48,10 +43,11 @@ public class UrlValidatorTest extends TestCase {
 
        UrlValidator urlValidator = new UrlValidator(UrlValidator.ALLOW_ALL_SCHEMES);
        setUpRandom(-1);
-      
+
        // Perform a simple test to fail fast. 
        assertTrue("Simple test of example URL", urlValidator.isValid("http://www.google.com"));
-
+       //assertTrue("1", urlValidator.isValid("http://www.example.com/~4sKy?uC^E``Wx"));
+              
        StringBuilder testUrlBuffer;
        StringPair stringPair;
        boolean expectedResult, result;
@@ -59,7 +55,7 @@ public class UrlValidatorTest extends TestCase {
        int successCases = 0, failedCases = 0;
  
        
-       for (int i = 0; i < 8000; i++) {
+       for (int i = 0; i < 1000000; i++) {
 
            testUrlBuffer = new StringBuilder();
            expectedResult = true;
@@ -85,12 +81,11 @@ public class UrlValidatorTest extends TestCase {
            expectedResult &= stringPair.valid;
            
            testUrl = testUrlBuffer.toString();
-           System.out.println("About to test with: " + testUrl);  // DEBUG
 
            try { 
                result = urlValidator.isValid(testUrl);
 
-               if ( assertBooleanCase(expectedResult + ": " + testUrl, expectedResult, result) ) {
+               if ( assertBooleanCase(testUrl + " is " + expectedResult + " valid", expectedResult, result) ) {
                    successCases++;
                } else {
                    failedCases++;
@@ -187,15 +182,99 @@ public class UrlValidatorTest extends TestCase {
    }
    
    private StringPair generateRandomPath() {
-       StringBuffer buf = new StringBuffer();
-       if (Math.random() <= .95) { 
-           buf.append("/");
+
+       // Always start the path with a slash. We could test a path w/o a slash, 
+       // but then it could be construed as a very long hostname, which is a 
+       // valid structure.
+       StringBuffer path = new StringBuffer("/");
+       boolean valid = true;
+
+       // Generate a path of random printable ASCII characters.
+       int numCharacters = 1;
+       for (int i = 0; i < _random.nextInt(20); i++) {
+
+           int nextChar = randomPrintableAscii();
+           
+           // Skip any question marks here. We'll test multiples in the query.
+           if (nextChar == 63) {
+               continue;
+           }
+           
+           // Also skip percent signs; we'll test them momentarily.
+           if (nextChar == 37) {
+               continue;           
+           }
+
+           // Also skip hash marks, since they make the rest of the URL irrelevant
+           if (nextChar == 35) {
+               continue;
+           }
+           
+           if (nextChar == 32)  valid = false; // space
+           if (nextChar == 34)  valid = false; // double quote
+           if (nextChar == 60 || nextChar == 62)  valid = false; // angle brackets 
+           if (nextChar >= 91 && nextChar <= 94)  valid = false; // square brackets, backslash, caret
+           if (nextChar == 96)  valid = false; // backtick
+           if (nextChar >= 123 && nextChar <= 125)  valid = false; // curly brackets, pipe
+
+           path.appendCodePoint(nextChar);
+           numCharacters++;
+           
        }
-       return new StringPair("/blah", true);
+
+       if (_random.nextInt(5) == 0) {
+           int numEntities = _random.nextInt(2) + 1;
+           int position = 0;
+
+            // Once every 5 cases, Add 1-2 valid and/or invalid URL escape entities.
+               for (int i = 0; i < numEntities && position < numCharacters - 2; i++) { 
+                   position += _random.nextInt(numCharacters - position);
+                   path.insert(position, '%'); 
+                   String randomByte = Integer.toHexString(_random.nextInt(256));
+
+                   if (randomByte.length() == 1) { 
+                       path.insert(position+1, "0" + randomByte);
+                   } else {
+                       path.insert(position+1, randomByte);
+                   }
+
+                   numCharacters += 3;
+                   position += 3;
+               }
+       }
+
+       return new StringPair(path.toString(), valid);
    }
-   
+
+
+
    private StringPair generateRandomQuery() {
-       return new StringPair("?search=example", true);
+
+       StringBuffer query = new StringBuffer("?");
+       boolean valid = true;
+
+       // Generate a query of random printable ASCII characters.
+       int numCharacters = _random.nextInt(20);
+       for (int i = 0; i < numCharacters; i++) {
+
+           int nextChar = randomPrintableAscii();
+
+           // Skip hash marks, since they make the rest of the URL irrelevant
+           if (nextChar == 35)  continue;
+
+           if (nextChar == 32)  valid = false; // space
+           // if (nextChar == 63)  valid = false;  // Question mark
+           // if (nextChar >= 91 && nextChar <= 94)  valid = false; // square brackets, backslash, caret
+
+           query.appendCodePoint(nextChar);
+       }
+
+       return new StringPair(query.toString(), valid);
+   }
+
+   private int randomPrintableAscii() {
+       int randomCodePoint = _random.nextInt(95) + 32;
+       return randomCodePoint;
    }
 
    // Adapted from ResultPair in the original UrlValidatorTest.
