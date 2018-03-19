@@ -17,25 +17,152 @@ public class UrlValidatorTest extends TestCase {
    }
 
    
+   /************ Manual testing **************/
+
    
    public void testManualTest()
-   {
-//You can use this function to implement your manual testing	   
-	   
+   {     
+
+    UrlValidator urlValidator = new UrlValidator(UrlValidator.ALLOW_ALL_SCHEMES);  
+
+    System.out.println("Starting Manual Test");
+
+    //testing URLs that should be valid
+
+        assertTrue(urlValidator.isValid("http://www.google.com"));
+        assertTrue(urlValidator.isValid("http://www.yahoo.com"));
+        assertTrue(urlValidator.isValid("http://8.8.8.8")); //correct IP range 
+        assertTrue(urlValidator.isValid("http://www.google.au"));
+        assertTrue(urlValidator.isValid("http://www.google.com:80")); //correct port
+        assertTrue(urlValidator.isValid("http://www.google.com/awesome")); //correct path
+        assertTrue(urlValidator.isValid("http://www.google.com/$156")); //correct path
+        assertTrue(urlValidator.isValid("http://www.google.com/?action=view")); //correct query
+        assertTrue(urlValidator.isValid("http://www.google.com/?action=edit&mode=up"));
+
+    //testing URLs that should be invalid 
+
+        // assertFalse(urlValidator.isValid("http:/www.google.com")); //missing a slash
+        assertFalse(urlValidator.isValid("http://256.256.300.300")); //incorrect IP range
+        assertFalse(urlValidator.isValid("http://8.8.8")); //incorrect IP format
+        assertFalse(urlValidator.isValid("http://8.8.8.8.8")); //incorrect IP format
+        assertFalse(urlValidator.isValid("http://.www.google.com")); //there's a "." right after the http://
+        assertFalse(urlValidator.isValid("http://google")); //no .BLANK after "google"
+        assertFalse(urlValidator.isValid("http://www.google.com:-20")); //invalid port number
+        assertFalse(urlValidator.isValid("http://www.google.com:80q")); //invalid port number
+        assertFalse(urlValidator.isValid("http://www.google.com/ ..")); //invalid path
+       
    }
    
+   
+   /********** Partition testing *************/
+      
    
    public void testYourFirstPartition()
    {
-	 //You can use this function to implement your First Partition testing	   
+      // Test paths
+      UrlValidator UrlValidatorPartition = new UrlValidator(null, null, UrlValidator.ALLOW_ALL_SCHEMES);
 
+      assertTrue(UrlValidatorPartition.isValid("http://www.google.com/test1"));
+      assertTrue(UrlValidatorPartition.isValid("http://www.google.com/t123"));
+      assertTrue(UrlValidatorPartition.isValid("http://www.google.com/$23"));
+      assertFalse(UrlValidatorPartition.isValid("http://www.google.com/..")); // /.. invalid
+      assertTrue(UrlValidatorPartition.isValid("http://www.google.com/test1/"));
+      assertTrue(UrlValidatorPartition.isValid("http://www.google.com/test1/file"));
+      assertFalse(UrlValidatorPartition.isValid("http://www.google.com/test1//file"));
+      assertFalse(UrlValidatorPartition.isValid("http://www.google.com/test1/...../"));
+      assertFalse(UrlValidatorPartition.isValid("http://www.google.com/test1/../"));
+      assertFalse(UrlValidatorPartition.isValid("http://www.google.com/test1/test1//file"));
    }
    
    public void testYourSecondPartition(){
-		 //You can use this function to implement your Second Partition testing	   
+      // Test scheme
+      UrlValidator UrlValidatorPartition = new UrlValidator(null, null, UrlValidator.ALLOW_ALL_SCHEMES);
+
+      assertTrue(UrlValidatorPartition.isValid("http://www.google.com"));
+      assertTrue(UrlValidatorPartition.isValid("ftp://www.google.com"));
+      assertTrue(UrlValidatorPartition.isValid("h3t://www.google.com"));
+      assertFalse(UrlValidatorPartition.isValid("3ht://www.google.com"));
+      assertFalse(UrlValidatorPartition.isValid("http:/www.google.com"));
+      assertFalse(UrlValidatorPartition.isValid("http:www.google.com"));
+      assertFalse(UrlValidatorPartition.isValid("http/www.google.com"));
+      assertFalse(UrlValidatorPartition.isValid("://www.google.com"));
+      assertTrue(UrlValidatorPartition.isValid("www.google.com"));
+   }
+
+   public void testYourThirdPartition(){
+      // Test ports
+      UrlValidator UrlValidatorPartition = new UrlValidator(null, null, UrlValidator.ALLOW_ALL_SCHEMES);
+
+      assertTrue(UrlValidatorPartition.isValid("http://www.google.com:80"));
+      assertTrue(UrlValidatorPartition.isValid("http://www.google.com:65535"));
+      assertFalse(UrlValidatorPartition.isValid("http://www.google.com:65536"));
+      assertTrue(UrlValidatorPartition.isValid("http://www.google.com:0"));
+      assertTrue(UrlValidatorPartition.isValid("http://www.google.com"));
+      assertFalse(UrlValidatorPartition.isValid("http://www.google.com:-1"));
+      assertFalse(UrlValidatorPartition.isValid("http://www.google.com:65a"));
+   }
+
+   public void testYourFourthPartition(){
+      // Test path options
+      UrlValidator UrlValidatorPartition = new UrlValidator(null, null, UrlValidator.ALLOW_ALL_SCHEMES);
+
+      assertTrue(UrlValidatorPartition.isValid("http://www.google.com/test1"));
+      assertTrue(UrlValidatorPartition.isValid("http://www.google.com/t123"));
+      assertTrue(UrlValidatorPartition.isValid("http://www.google.com/$23"));
+      assertFalse(UrlValidatorPartition.isValid("http://www.google.com/.."));
+      assertFalse(UrlValidatorPartition.isValid("http://www.google.com/../"));
+      assertTrue(UrlValidatorPartition.isValid("http://www.google.com/test1/"));
+      assertFalse(UrlValidatorPartition.isValid("http://www.google.com/#"));
+      assertTrue(UrlValidatorPartition.isValid("http://www.google.com"));
+      assertTrue(UrlValidatorPartition.isValid("http://www.google.com/test1/file"));
+      assertTrue(UrlValidatorPartition.isValid("http://www.google.com/t123/file"));
+      assertTrue(UrlValidatorPartition.isValid("http://www.google.com/$23/file"));
+      assertFalse(UrlValidatorPartition.isValid("http://www.google.com/../file"));
+      assertFalse(UrlValidatorPartition.isValid("http://www.google.com/..//file"));
+      assertTrue(UrlValidatorPartition.isValid("http://www.google.com/test1//file"));
+      assertFalse(UrlValidatorPartition.isValid("http://www.google.com/#/file"));
+   }
+
+   public void testYourFifthPartition(){
+      // Test query
+      UrlValidator UrlValidatorPartition = new UrlValidator(null, null, UrlValidator.ALLOW_ALL_SCHEMES);
+
+      assertTrue(UrlValidatorPartition.isValid("http://www.google.com/test1?action=view"));
+      assertTrue(UrlValidatorPartition.isValid("http://www.google.com/test1?action=edit&mode=up"));
+      assertTrue(UrlValidatorPartition.isValid("http://www.google.com/test1"));
+      assertFalse(UrlValidatorPartition.isValid("http://www.google.com/test1?action=="));
+      assertFalse(UrlValidatorPartition.isValid("http://www.google.com/test1?+"));
+   }
+
+   public void testYourSixthPartition(){
+      // Test authority
+      UrlValidator UrlValidatorPartition = new UrlValidator(null, null, UrlValidator.ALLOW_ALL_SCHEMES);
+
+      assertTrue(UrlValidatorPartition.isValid("http://www.google.com"));
+      assertTrue(UrlValidatorPartition.isValid("http://go.com"));
+      assertFalse(UrlValidatorPartition.isValid("http://go,com"));
+      assertTrue(UrlValidatorPartition.isValid("http://0.0.0.0"));
+      assertTrue(UrlValidatorPartition.isValid("http://255.255.255.255"));
+      assertFalse(UrlValidatorPartition.isValid("http://255.255.255.256"));
+      assertFalse(UrlValidatorPartition.isValid("http://256.256.256.256"));
+      assertFalse(UrlValidatorPartition.isValid("http://255.255.-1.256"));
+      assertTrue(UrlValidatorPartition.isValid("http://255.com"));
+      assertFalse(UrlValidatorPartition.isValid("http://1.2.3.4.5"));
+      assertFalse(UrlValidatorPartition.isValid("http://1.2.3.4."));
+      assertFalse(UrlValidatorPartition.isValid("http://"));
+      assertFalse(UrlValidatorPartition.isValid("http://aaa"));
+      assertFalse(UrlValidatorPartition.isValid("http://aaa."));
+      assertFalse(UrlValidatorPartition.isValid("http://.aaa"));
+      assertFalse(UrlValidatorPartition.isValid("http://go.1aa"));
+      assertFalse(UrlValidatorPartition.isValid("http://.1.2.3.4"));
+      assertFalse(UrlValidatorPartition.isValid("http://go.a"));
+      assertFalse(UrlValidatorPartition.isValid("http://go.a1a"));
+      assertFalse(UrlValidatorPartition.isValid("http://1.2.3"));
 
    }
-   //You need to create more test cases for your Partitions if you need to 
+
+   
+   /*********** Programmatic testing ***********/
    
    public void testIsValid()
    {
