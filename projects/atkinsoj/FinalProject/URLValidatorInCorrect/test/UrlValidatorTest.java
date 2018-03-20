@@ -287,7 +287,66 @@ public class UrlValidatorTest extends TestCase {
    }
 
    private StringPair generateRandomHostname() {
-       return new StringPair("www.example.com", true);
+       
+       StringBuffer host = new StringBuffer();
+       boolean valid = true;
+       
+       // Test with random ASCII characters 1/20 of the time, and with letters and numbers the rest of the time.
+       int typeOfHost = _random.nextInt(20);
+       
+       switch (typeOfHost) {
+       case 0:
+                     
+           // Generate a host name of random printable ASCII characters.
+
+           int numRandomHostChars = _random.nextInt(12);
+           for (int i = 0; i < numRandomHostChars ; i++) {
+
+               int nextChar = randomPrintableAscii();
+               
+               // Anything other than letters and numbers is invalid.
+               if (nextChar < 46
+                       || nextChar == 47
+                       || (nextChar >= 58 && nextChar <= 64)
+                       || (nextChar >= 91 && nextChar <= 96)
+                       || nextChar > 123) {
+                   valid = false;
+               }
+               
+               host.appendCodePoint(nextChar);
+           }
+           return new StringPair(host.toString(), valid); 
+           
+       default:
+
+           // Generate a host name of just characters and dots
+           
+           int numHostChars = _random.nextInt(12);
+
+           for (int j = 0; j < numHostChars; j++) {
+
+               int nextChar = randomPrintableAscii();
+               
+               // Anything other than letters and numbers is invalid.
+               if (nextChar < 46
+                       || nextChar == 47
+                       || (nextChar >= 58 && nextChar <= 64)
+                       || (nextChar >= 91 && nextChar <= 96)
+                       || nextChar > 123) {
+                   continue;
+               }
+               
+               host.appendCodePoint(nextChar);
+           }
+           
+           String hostname = host.toString();
+           
+           if (hostname.startsWith(".") || hostname.endsWith("."))  valid = false;
+           if (hostname.length() == 0)  valid = false;
+
+           return new StringPair(hostname, valid); 
+
+       }
    }
    
    private StringPair generateRandomPort() {
@@ -320,7 +379,8 @@ public class UrlValidatorTest extends TestCase {
 
        // Generate a path of random printable ASCII characters.
        int numCharacters = 1;
-       for (int i = 0; i < _random.nextInt(20); i++) {
+       int numPathChars = _random.nextInt(20);
+       for (int i = 0; i < numPathChars; i++) {
 
            int nextChar = randomPrintableAscii();
            
