@@ -1,3 +1,8 @@
+
+// Sunny Huang (huangsun), Jon Atkinson (atkinsoj), Ian Lumiere (lumierei)
+// March 18, 2018
+// Final Project Part B
+
 import java.util.Random;
 import junit.framework.TestCase;
 
@@ -33,7 +38,8 @@ public class UrlValidatorTest extends TestCase {
         assertTrue(urlValidator.isValid("http://www.yahoo.com"));
         assertTrue(urlValidator.isValid("http://8.8.8.8")); //correct IP range 
         assertTrue(urlValidator.isValid("http://www.google.au"));
-        assertTrue(urlValidator.isValid("https://www.google.com:80")); //correct port
+        assertTrue(urlValidator.isValid("https://www.google.com"));
+        assertTrue(urlValidator.isValid("http://www.google.com:80")); //correct port
         assertTrue(urlValidator.isValid("https://www.google.com/awesome")); //correct path
         assertTrue(urlValidator.isValid("https://www.google.com/$156")); //correct path
         assertTrue(urlValidator.isValid("ftp://www.google.com/?action=view")); //correct query
@@ -65,6 +71,7 @@ public class UrlValidatorTest extends TestCase {
       // Test paths
       UrlValidator UrlValidatorPartition = new UrlValidator(null, null, UrlValidator.ALLOW_ALL_SCHEMES);
 
+      assertTrue(UrlValidatorPartition.isValid("http://www.google.com/~username"));
       assertTrue(UrlValidatorPartition.isValid("http://www.google.com/test1"));
       assertTrue(UrlValidatorPartition.isValid("http://www.google.com/t123"));
       assertTrue(UrlValidatorPartition.isValid("http://www.google.com/$23"));
@@ -73,7 +80,6 @@ public class UrlValidatorTest extends TestCase {
       assertTrue(UrlValidatorPartition.isValid("http://www.google.com/test1/file"));
       assertFalse(UrlValidatorPartition.isValid("http://www.google.com/test1/...../"));
       assertFalse(UrlValidatorPartition.isValid("http://www.google.com/test1/../"));
-      assertTrue(UrlValidatorPartition.isValid("http://www.google.com/~username"));
    }
    
    public void testYourSecondPartition(){
@@ -175,7 +181,6 @@ public class UrlValidatorTest extends TestCase {
 
        // Perform a simple test to fail fast. 
        assertTrue("Simple test of example URL", urlValidator.isValid("http://www.google.com"));
-       //assertTrue("1", urlValidator.isValid("http://www.example.com/~4sKy?uC^E``Wx"));
               
        StringBuilder testUrlBuffer;
        StringPair stringPair;
