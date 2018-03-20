@@ -33,11 +33,11 @@ public class UrlValidatorTest extends TestCase {
         assertTrue(urlValidator.isValid("http://www.yahoo.com"));
         assertTrue(urlValidator.isValid("http://8.8.8.8")); //correct IP range 
         assertTrue(urlValidator.isValid("http://www.google.au"));
-        assertTrue(urlValidator.isValid("http://www.google.com:80")); //correct port
-        assertTrue(urlValidator.isValid("http://www.google.com/awesome")); //correct path
-        assertTrue(urlValidator.isValid("http://www.google.com/$156")); //correct path
-        assertTrue(urlValidator.isValid("http://www.google.com/?action=view")); //correct query
-        assertTrue(urlValidator.isValid("http://www.google.com/?action=edit&mode=up"));
+        assertTrue(urlValidator.isValid("https://www.google.com:80")); //correct port
+        assertTrue(urlValidator.isValid("https://www.google.com/awesome")); //correct path
+        assertTrue(urlValidator.isValid("https://www.google.com/$156")); //correct path
+        assertTrue(urlValidator.isValid("ftp://www.google.com/?action=view")); //correct query
+        assertTrue(urlValidator.isValid("ftp://www.google.com/?action=edit&mode=up"));
 
     //testing URLs that should be invalid 
 
@@ -48,8 +48,11 @@ public class UrlValidatorTest extends TestCase {
         assertFalse(urlValidator.isValid("http://.www.google.com")); //there's a "." right after the http://
         assertFalse(urlValidator.isValid("http://google")); //no .BLANK after "google"
         assertFalse(urlValidator.isValid("http://www.google.com:-20")); //invalid port number
-        assertFalse(urlValidator.isValid("http://www.google.com:80q")); //invalid port number
-        assertFalse(urlValidator.isValid("http://www.google.com/ ..")); //invalid path
+        assertFalse(urlValidator.isValid("https://www.google.com:80q")); //invalid port number
+        assertFalse(urlValidator.isValid("https://www.google.com/ ..")); //invalid path
+        assertFalse(urlValidator.isValid("browser://www.google.com"));
+        assertFalse(urlValidator.isValid("blah:/:::/www.google.com/ .."));
+
        
    }
    
@@ -68,10 +71,9 @@ public class UrlValidatorTest extends TestCase {
       assertFalse(UrlValidatorPartition.isValid("http://www.google.com/..")); // /.. invalid
       assertTrue(UrlValidatorPartition.isValid("http://www.google.com/test1/"));
       assertTrue(UrlValidatorPartition.isValid("http://www.google.com/test1/file"));
-      assertFalse(UrlValidatorPartition.isValid("http://www.google.com/test1//file"));
       assertFalse(UrlValidatorPartition.isValid("http://www.google.com/test1/...../"));
       assertFalse(UrlValidatorPartition.isValid("http://www.google.com/test1/../"));
-      assertFalse(UrlValidatorPartition.isValid("http://www.google.com/test1/test1//file"));
+      assertTrue(UrlValidatorPartition.isValid("http://www.google.com/~username"));
    }
    
    public void testYourSecondPartition(){
